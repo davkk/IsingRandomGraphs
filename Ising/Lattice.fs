@@ -3,10 +3,8 @@ namespace Lattice
 open Domain
 
 module private Helpers =
-    let inline (%/) a b = (a + b) % b
-
-    let inline wrap (x: int) (max: int) =
-        if x > 0 && x < max then x else x %/ max
+    let inline (%/) x max =
+        if x > 0 && x < max then x else (x + max) % max
 
 open Helpers
 
@@ -31,11 +29,15 @@ type Lattice(spins: sbyte array, size: int) =
 
     member inline self.Item
         with get (i: int, j: int) =
-            let i, j = wrap i size, wrap j size
+            let i = i %/ self.Size
+            let j = j %/ self.Size
+
             self.Spins[i + j * self.Size]
 
         and set (i: int, j: int) value =
-            let i, j = wrap i size, wrap j size
+            let i = i %/ self.Size
+            let j = j %/ self.Size
+
             self.Spins[i + j * self.Size] <- value
 
 
