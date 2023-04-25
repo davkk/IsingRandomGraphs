@@ -3,10 +3,6 @@ open Lattice
 
 open Gtk
 
-let OnDelete (sender: obj) (args: DeleteEventArgs) =
-    Gtk.Application.Quit()
-    args.RetVal <- true
-
 [<EntryPoint>]
 let main _ =
     Gtk.Application.Init()
@@ -60,7 +56,11 @@ let main _ =
 
     window.Add(drawing)
 
-    window.DeleteEvent.AddHandler(fun s a -> OnDelete s a) // fun still needed
+    window.DeleteEvent.AddHandler(fun _ args ->
+        Gtk.Application.Quit()
+        args.RetVal <- true
+    )
+
     window.ShowAll()
     window.Show()
 
