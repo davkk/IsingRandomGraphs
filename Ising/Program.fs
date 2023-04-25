@@ -9,14 +9,13 @@ let OnDelete (sender: obj) (args: DeleteEventArgs) =
 
 [<EntryPoint>]
 let main _ =
-    // Create the window
     Gtk.Application.Init()
-    use window = new Window("Ising - 2D lattice")
+
+    use window =
+        new Window("Ising - 2D lattice")
 
     let windowSize = 512
     window.SetDefaultSize(windowSize, windowSize)
-
-    use drawing = new DrawingArea()
 
 
     let parameters: Params =
@@ -27,17 +26,23 @@ let main _ =
             Beta = 1.4
         }
 
-    let result = Ising.simulate parameters
+
+    let mutable lattice =
+        Lattice.create parameters
+
+    let _ = Ising.simulate parameters (&lattice)
 
     let cellSize =
         windowSize / parameters.LatticeSize
+
+    use drawing = new DrawingArea()
 
     drawing.Drawn.Add(fun args ->
         let cr = args.Cr
 
         for i in 0 .. parameters.LatticeSize - 1 do
             for j in 0 .. parameters.LatticeSize - 1 do
-                if result.Lattice[i, j] = 1y then
+                if lattice[i, j] = 1y then
                     cr.SetSourceRGB(0.0, 0.0, 0.0)
                 else
                     cr.SetSourceRGB(1.0, 1.0, 1.0)

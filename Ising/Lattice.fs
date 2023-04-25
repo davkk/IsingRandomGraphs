@@ -5,15 +5,8 @@ open Domain
 module private Helpers =
     let inline (%/) a b = (a + b) % b
 
-    let isInRange (i: int) (j: int) (size: int) =
-        if i >= 0 && i < size && j >= 0 && j < size then
-            true
-        else
-            raise
-            <| System.IndexOutOfRangeException
-                $"Either i={i} or j={j} was out of range"
-
-            false
+    let inline wrap (x: int) (max: int) =
+        if x > 0 && x < max then x else x %/ max
 
 open Helpers
 
@@ -34,20 +27,21 @@ type Lattice(spins: sbyte array, size: int) =
 
     member _.Spins = spins
     member _.Size = size
+    member _.Length = spins.Length
 
-    member self.Item
-        with inline get (i: int, j: int) =
-            let i = i %/ self.Size
-            let j = j %/ self.Size
+    member inline self.Item
+        with get (i: int, j: int) =
+            let i, j = wrap i size, wrap j size
             self.Spins[i + j * self.Size]
 
-        and inline set (i: int, j: int) value =
-            let i = i %/ self.Size
-            let j = j %/ self.Size
+        and set (i: int, j: int) value =
+            let i, j = wrap i size, wrap j size
             self.Spins[i + j * self.Size] <- value
 
 
 module Lattice =
+    let inline create (parameters: Params) = Lattice(parameters)
+
     let inline sumNeighbors (i: int, j: int) (lattice: Lattice) =
         lattice[i - 1, j]
         + lattice[i + 1, j]
@@ -66,7 +60,7 @@ module Lattice =
 
         -float sum / 2.0
 
-    let inline totalMagnetization (lattice: Lattice) =
+    let inline totalMagnet (lattice: Lattice) =
         let mutable sum = 0
 
         for i in 0 .. lattice.Size - 1 do

@@ -9,11 +9,9 @@ type Params =
         Beta: float
     }
 
-// [<Struct>]
-// type Stats =
-//     {
-//         Lattice: Lattice
-//         Beta: float
-//         AvgE: float
-//         AvgM: float
-//     }
+[<Struct>]
+type Stats =
+    {
+        AvgE: float
+        AvgM: float
+    }

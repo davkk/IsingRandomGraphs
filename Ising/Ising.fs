@@ -3,57 +3,46 @@ module Ising
 open Domain
 open Lattice
 
-[<Struct>]
-type Stats =
-    {
-        Lattice: Lattice
-        Beta: float
-        AvgE: float
-        AvgM: float
-    }
-
-let simulate (parameters: Params) : Stats =
+let simulate (parameters: Params) (lattice: Lattice byref) : Stats =
     let probabilities =
         [| for dE in -8. .. 4. .. 8. -> exp (-parameters.Beta * dE) |]
 
-    let mutable lattice = Lattice(parameters)
+    let mutable energy =
+        lattice |> Lattice.totalEnergy
 
-    let rec loop (sweep, energy, magnetization) =
-        if sweep = parameters.Sweeps then
-            {
-                Lattice = lattice
-                Beta = parameters.Beta
-                AvgE = energy / float lattice.Spins.Length
-                AvgM =
-                    magnetization
-                    / float lattice.Spins.Length
-            }
+    let mutable magnet =
+        lattice |> Lattice.totalMagnet
 
-        else
-            let i, j =
-                parameters.Rng.Next(0, lattice.Size),
-                parameters.Rng.Next(0, lattice.Size)
+    let mutable sweeps = parameters.Sweeps
 
-            let neighborSum =
-                lattice |> Lattice.sumNeighbors (i, j)
+    while sweeps > 0 do
+        let i, j =
+            parameters.Rng.Next(0, lattice.Size),
+            parameters.Rng.Next(0, lattice.Size)
 
-            let dE = 2y * lattice[i, j] * neighborSum
-            let dM = -2y * lattice[i, j]
+        let neighborSum =
+            lattice[i - 1, j]
+            + lattice[i + 1, j]
+            + lattice[i, j - 1]
+            + lattice[i, j + 1]
 
-            let shouldFlip =
-                parameters.Rng.NextDouble() < probabilities[int dE / 4 + 2]
-                || dE < 0y
+        let dE = 2y * lattice[i, j] * neighborSum
 
-            // TODO: byref??
-            if shouldFlip then
-                lattice[i, j] <- -lattice[i, j]
+        let dM = -2y * lattice[i, j]
 
-                loop (sweep + 1, energy + float dE, magnetization + float dM)
-            else
-                loop (sweep + 1, energy, magnetization)
+        let shouldFlip =
+            parameters.Rng.NextDouble() < probabilities[int dE / 4 + 2]
+            || dE < 0y
 
-    loop (
-        1,
-        lattice |> Lattice.totalEnergy,
-        lattice |> Lattice.totalMagnetization
-    )
+        if shouldFlip then
+            lattice[i, j] <- -lattice[i, j]
+
+            energy <- energy + float dE
+            magnet <- magnet + float dM
+
+        sweeps <- sweeps - 1
+
+    {
+        AvgE = energy / float lattice.Length
+        AvgM = magnet / float lattice.Length
+    }
