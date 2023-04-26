@@ -20,13 +20,10 @@ let simulate (parameters: Params) (lattice: Lattice byref) : Stats =
             parameters.Rng.Next(0, lattice.Size),
             parameters.Rng.Next(0, lattice.Size)
 
-        let neighborSum =
-            lattice[i - 1, j]
-            + lattice[i + 1, j]
-            + lattice[i, j - 1]
-            + lattice[i, j + 1]
+        let neighbors =
+            lattice |> Lattice.sumNeighbors (i, j)
 
-        let dE = 2y * lattice[i, j] * neighborSum
+        let dE = 2y * lattice[i, j] * neighbors
 
         let dM = -2y * lattice[i, j]
 
