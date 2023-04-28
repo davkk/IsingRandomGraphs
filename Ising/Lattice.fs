@@ -1,5 +1,8 @@
 namespace Lattice
 
+open System
+open System.Collections
+open System.Collections.Generic
 open Domain
 
 module private Helpers =
@@ -8,7 +11,7 @@ module private Helpers =
 
 open Helpers
 
-[<Struct>]
+[<Struct; CustomEquality; NoComparison>]
 type Lattice(spins: sbyte array, size: int) =
     new(parameters: Params) =
         let size = parameters.LatticeSize
@@ -42,6 +45,20 @@ type Lattice(spins: sbyte array, size: int) =
 
             self.Spins[i + j * self.Size] <- value
 
+    interface IEnumerable<sbyte> with
+        member self.GetEnumerator () : IEnumerator<sbyte> =
+            (self.Spins :> IEnumerable<sbyte>).GetEnumerator()
+
+        member self.GetEnumerator () : IEnumerator =
+            (self :> IEnumerable<_>).GetEnumerator() :> IEnumerator
+
+    override self.Equals (other) =
+        match other with
+        | :? Lattice as other -> self.Spins = other.Spins
+        | _ -> invalidArg "other" "cannot compare"
+
+    override self.GetHashCode () =
+        self.Spins.GetHashCode()
 
 module Lattice =
     let inline create (parameters: Params) = Lattice(parameters)
